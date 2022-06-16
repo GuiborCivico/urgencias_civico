@@ -1,13 +1,10 @@
-# Análisis generales de Cívico
+# urgencias_civico
 Este repo contiene códigos de algunos análisis on-the-run
 
 
-## Códigos básicos
-
-### 1. Consultar desde Bigquery
+`r library(bigrquery)`
 
 ```r
-library(bigrquery)
 
 Base <- bq_table_download(bq_project_query(
   ## 1. Nombre del proyecto
