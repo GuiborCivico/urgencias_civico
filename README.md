@@ -1,8 +1,9 @@
-# urgencias_civico
+# Ánalisis generales (urgencias)
 Este repo contiene códigos de algunos análisis on-the-run
 
 
-`r library(bigrquery)`
+## Tips
+### 1. Extraer bases de BigQuery
 
 ```r
 
