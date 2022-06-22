@@ -22,14 +22,13 @@ Base <- bq_table_download(bq_project_query(
 simplyTEXT <- function(texto) {
   texto <- tolower(texto)
   #texto <- gsub(pattern = "\ ", replacement = "",texto)
-  texto <- gsub(pattern = "?", replacement = "a",texto)
-  texto <- gsub(pattern = "?", replacement = "e",texto)
-  texto <- gsub(pattern = "?", replacement = "i",texto)
-  texto <- gsub(pattern = "?", replacement = "o",texto)
-  texto <- gsub(pattern = "?", replacement = "u",texto)
-  texto <- gsub(pattern = "?", replacement = "u",texto)
-  texto <- gsub(pattern = "?", replacement = "u",texto)
-  texto <- gsub(pattern = "?", replacement = "n",texto)
+  texto <- gsub(pattern = "á", replacement = "a",texto)
+  texto <- gsub(pattern = "é", replacement = "e",texto)
+  texto <- gsub(pattern = "í", replacement = "i",texto)
+  texto <- gsub(pattern = "ó", replacement = "o",texto)
+  texto <- gsub(pattern = "ú", replacement = "u",texto)
+  texto <- gsub(pattern = "ü", replacement = "u",texto)
+  texto <- gsub(pattern = "ñ", replacement = "n",texto)
   return(texto)
 }
 
