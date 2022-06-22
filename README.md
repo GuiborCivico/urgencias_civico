@@ -16,7 +16,11 @@ Base <- bq_table_download(bq_project_query(
   (SELECT * FROM `insights-295219.landing_prod.entities`)) 
 
 ```
-### 2. Simplificaicón de textos en español
+### 2. Extraer bases de CloudStorage
+
+
+
+### 3. Simplificaicón de textos en español
 
 ```r
 simplyTEXT <- function(texto) {
@@ -32,4 +36,4 @@ simplyTEXT <- function(texto) {
   return(texto)
 }
 
-``
+```
