@@ -4,6 +4,7 @@ library(bigrquery)
 library(ggplot2)
 
 
+
 # 1. Cargar ingormación ----
 a0_raw <- bq_table_download(bq_project_query(
   ## A. Nombre del proyecto
@@ -242,37 +243,19 @@ ggsave("2. Proyectos/03_Fondo_de_garantias/g04_Riesgos_trimestrales.png",
 
 
 
+# 5. Exportacion de tablas resultado ----
 
+f1_riesgos_mes <- 
+  a2_panel_riesgo %>% 
+  reshape2::dcast(PAR+month~rango, value.var = "p", fill = 0) %>% 
+  arrange(month,PAR)
+write.csv(f1_riesgos_mes, "3. Datos/T01_resultados_mensuales.csv", row.names = F)
 
-
-
-#####
-a2_panel_mensual <- a1_clietes %>% 
-  select(month, trimestre, PAR30, PAR60, PAR90) %>% 
-  reshape2::melt(id.vars = c("month","trimestre"), variable.name = "PAR",
-                 value.name = "riesgo") %>% 
-  mutate(rango = case_when(
-    riesgo <= 0.1 ~ "de 0% a 10% (Muy Bajo)",
-    riesgo > 0.2 & riesgo <= 0.3 ~ "de 10% a 20%",
-    riesgo > 0.3 & riesgo <= 0.4 ~ "de 20% a 30%",
-    riesgo > 0.4 & riesgo <= 0.5 ~ "de 30% a 40%",
-    riesgo > 0.5 & riesgo <= 0.6 ~ "de 40% a 50%",
-    riesgo > 0.6 & riesgo <= 0.7 ~ "de 50% a 60%",
-    riesgo > 0.7 & riesgo <= 0.8 ~ "de 60% a 70%",
-    riesgo > 0.8 & riesgo <= 0.9 ~ "de 70% a 80%",
-    T ~ "de 90% a 100% (Muy Alto)")) %>% 
-  
-  #pruebas
-  group_by(PAR, month) %>%
-  mutate(tamano.rango = n()) %>% 
-  as.data.frame() %>% 
-  group_by(PAR, month, rango) %>% 
-  summarise(n = n(),
-            tamano.rango = mean(tamano.rango)) %>% 
-  mutate(p = n/tamano.rango) %>% as.data.frame() #%>% 
-# M'
-reshape2::dcast(PAR+month~rango, value.var = "p")
-
+f2_riesgos_trimestre <-
+  a3_panel_trimestral %>% 
+  reshape2::dcast(PAR+trimestre~rango, value.var = "p", fill = 0) %>% 
+  arrange(trimestre,PAR)
+write.csv(f2_riesgos_trimestre, "3. Datos/T02_resultados_trimestre.csv", row.names = F)
 
 
 
