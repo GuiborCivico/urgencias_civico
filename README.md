@@ -13,7 +13,7 @@ Base <- bq_table_download(bq_project_query(
   "insights-295219",
   
   ## B. Consulta SQL
-  ("SELECT * FROM `insights-295219.landing_prod.entities`")) 
+  ("SELECT * FROM `insights-295219.landing_prod.entities`"))) 
 
 ```
 ### 2. Extraer bases de CloudStorage
