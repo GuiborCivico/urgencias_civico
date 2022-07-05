@@ -105,35 +105,70 @@ pr <- pr %>%
 
 #####
 mmtest <- function(base, model, umbral) {
-  base$prediccion <- predict(model, base, type = "response")
-  # base <- base %>% 
-    # mutate(prediccion = ifelse(prediccion >= umbral,1,0))
+  base$riesgo <- predict(model, base, type = "response")
+  base <- base %>%
+  mutate(prediccion = ifelse(riesgo >= umbral,"P.1","P.0"))
   base
   
 }
 
+# 1. Modelación
 m1 <- #pr %>% 
   glm(PAR15~antiguedad+
-      edad+CU07_contact_gender+nequi_sales_percentage, pr, family = "binomial")
+      edad+CU07_contact_gender+nequi_sales_percentage+operation_type, pr, family = "binomial")
 
+# 2. Revisión
 pr %>% 
   stargazer(m1, type = "text")
 
 
 
-
-pr <- mmtest(pr, m1, 0.5)
-pr$prediccion
-
-pr$prediccion <- predict(m1,pr, type="response")
-pr$prediccion
-
-table(pr$PAR15~pr$prediccion)
+# 3. Imputación y validación
+ppar_15(0.2)
 
 
 
-rrport(pr, nequi_sales_percentage)
-pr$nequi_sales_percentage
+ppar_15 <- function(umbral_) {
+  pr <- mmtest(pr, m1, umbral_)
+  message(
+    "Aprobación esperada = ", 100-round(100*mean(pr$PAR15),2),"%\n",
+    "Aprobación final = ", round(100*mean(pr$riesgo < umbral_),2),"%\n",
+  paste0(
+    "Acuarcy = ",
+    round(
+      100*(table(pr$PAR15,pr$prediccion)[1]+
+             table(pr$PAR15,pr$prediccion)[4])/nrow(pr),2),"%  ||  ",
+    
+    "Sensitivity = ",
+    round(
+      100*(table(pr$PAR15,pr$prediccion)[4]/
+             (table(pr$PAR15,pr$prediccion)[4]+
+                table(pr$PAR15,pr$prediccion)[2])),2),"%  ||  ", 
+    
+    "Specificity = ",
+    round(
+      100*(table(pr$PAR15,pr$prediccion)[1]/
+             (table(pr$PAR15,pr$prediccion)[1]+
+                table(pr$PAR15,pr$prediccion)[3])),2),"%"))
+}
+
+
+round((table(pr$PAR15)/nrow(pr))*100,2)
+round((table(pr$PAR30)/nrow(pr))*100,2)
+round((table(pr$PAR60)/nrow(pr))*100,2)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

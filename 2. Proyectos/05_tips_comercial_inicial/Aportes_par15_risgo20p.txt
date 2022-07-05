@@ -1,0 +1,10 @@
+antiguedad+edad+genero+nequi
+Aprobación esperada = 69.99%
+Aprobación final = 13.51%
+Acuarcy = 36.7%  ||  Sensitivity = 88.63%  ||  Specificity = 14.43%
+
+
+(...) + tipo_local
+Aprobación esperada = 69.99%
+Aprobación final = 15.08%
+Acuarcy = 37.41%  ||  Sensitivity = 87.2%  ||  Specificity = 16.06%
