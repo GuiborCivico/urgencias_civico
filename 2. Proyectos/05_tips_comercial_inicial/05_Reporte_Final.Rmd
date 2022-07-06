@@ -1,0 +1,93 @@
+---
+title: "Reporte de Riesgo"
+author: "Cívico - Equipo DATA"
+date: '2022-07-06'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r inicio_e_info, echo=FALSE, message=FALSE, warning=FALSE}
+# Librerias
+library(dplyr)
+library(stargazer)
+library(reshape2)
+library(ggplot2)
+
+# Cargue de base de datos
+source("prueba_source.R")
+
+```
+
+# Introducción
+
+Este informe tiene dos objetivos putnuales:
+
+-   Revisar cuales son las vairables que pueden ser utilizadas como maradores directos de riesgo
+
+-   Revisar cuál es el aporte de las diferentes conjuntos de variables al mejoramiento de la predicción del riesgo.
+
+### Muestra empleada
+
+El análisis parte de los créditos que cumplan las siguientes condiciones:
+
+-   Más de 60 días en la cartera
+
+-   Que hallan llenado el formulario nuevo de solicitud del crédito
+
+-   Que tengan todos los campos de información completa y con respuestas coherentes
+
+Con estas **condiciones muestrales**, la tamaño de la población evaluada fue de `r nrow(a1_base)` créditos.
+
+```{r histograma_antiguedad, echo=FALSE, message=FALSE, warning=FALSE, results='asis', fig.align='center', fig.width=4, fig.height=3}
+
+a1_base %>% ggplot(aes(antiguedad)) +
+  geom_histogram(fill = "cyan4",alpha =0.4, color = "grey70")+
+  geom_vline(xintercept = mean(a1_base[,"antiguedad"]), lty=2,color ="red")+
+  labs(title = "Distribución de días de antiguedad",
+       x = "Dias de antigüedad", y = "Créditos evaluadas")+
+  theme_minimal()+
+  theme(text = element_text(family = "serif", size = 7),
+        plot.title = element_text(hjust = 0.5))
+```
+
+Dado el tamaño de la muestra más su maduración (antigüedad de los créditos en la cartera), es posible que aquellos efectos pequeños (pero existentes) no sean detectados por el análisis.
+
+# Metodología
+
+Se clasificaron los variables en 9 conjuntos como se ve e la siguiente tabla:
+
+```{r variables_grupos, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+
+stargazer(
+read.csv("grupos_variables.csv"), summary = F, font.size = "tiny", header = F, rownames = F, title = "Conjuntos temáticos de variables")
+
+```
+
+Se utilizaron modelos logit para evaluar el efecto de cada una de las variables, la modelación de realizo de manera aditiva como se muestra en la siguiente fórmula:
+
+$$
+log\left( \frac{Pr|PAR_n}{1-Pr|PAR_n} \right) = \alpha + \beta (C_j)'_i+ \theta(C_{k:j-1})'_i + \epsilon_i
+$$
+
+De este manera, la probabilidad de entrar en un PAR cualuiqera (15, 30 o 60), esta determinada por el conjnto de variables a evaluar, mas los conjutnos de variables anteriores.
+
+| Modelo        | Variables explicataorias            |
+|---------------|-------------------------------------|
+| 01\. Básico   | Control                             |
+| 02\. Persona  | Control, Persona                    |
+| 03\. Ingresos | Control, Persona, Ingresos          |
+| 04\. Negocio  | Control, Persona, Ingresos, Neogcio |
+| (...)         | (...)                               |
+
+### Limitaciones
+
+Las limitaciones de este enfoque son:
+
+-   El orden en el que se anxan variables **NO ES CONMUTATIVO**, respecto al reporte estadístico global de cada conjutno de variables.
+
+-   Se asume un umbral constante para la evaluación de todo los PAR's
+
+-   Se emplea un modelo logit con las variables nuevas, pero el que esta en uso es un RM con las variables viejas. Esto significa que los niveles de aprobación son ejemplificantes pero no los reales.
+
+-   Por la maduración de la cartera, los resultados son más confiables para PAR's juveniles que para PAR's más maduros.

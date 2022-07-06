@@ -1,0 +1,25 @@
+Vriable.,Grupo.,Variable,Grupo
+Antigüedad,1. Control,Tipo de inventario,6. Gestion
+Semana,1. Control,Tipo de contabilidad,6. Gestion
+Género,2. Persona,Fía o no,6. Gestion
+Edad,2. Persona,Tipo de persona,7. Formalidad
+Estado civil,2. Persona,Registro en C.comercio (1 = Sí),7. Formalidad
+Nivel educativo,2. Persona,Cotiza SS.Salud (1 = Sí),7. Formalidad
+Tamaño del hogar,2. Persona,Cotiza SS.Pensión (1 = Sí),7. Formalidad
+Contribuidores en el hogar,2. Persona,Cotiza SS.Riesgo (1 = Sí),7. Formalidad
+Dependencia,2. Persona,Coiza SS.Caja Familiar (1 = Sí),7. Formalidad
+Ingresos Negocio,3. Ingresos,Trato de provedores,8. Comunidad
+Ingresos Hogar,3. Ingresos,# de clientes que conoce,8. Comunidad
+% de ventas en Nequi,3. Ingresos,Comparado con año anterior,9. Autopercepcion
+Tipo de negovcio,4. Negocio,Como le irá el otro año,9. Autopercepcion
+Experiencia en el negocio,4. Negocio,Comparado con otros,9. Autopercepcion
+Tipo de operación,4. Negocio,Dificultad de llegar al mismo estado,9. Autopercepcion
+Cambio de actividad (1 = Sí),4. Negocio,Calificación como comerciante,9. Autopercepcion
+Número de empleados,4. Negocio,Pr| de pagar tarde,9. Autopercepcion
+Número de empleados familiares,4. Negocio,Destino del crédito,10. Carácter
+Créditos con amigos (1 = Sí),5. Bancario,Situación: Acueducto,10. Carácter
+Créditos gota a gota (1 = Sí),5. Bancario,Situación: Transmilenio,10. Carácter
+Créditos con bancos (1 = Sí),5. Bancario,Acciones para crecer,10. Carácter
+"Créditos ""otros"" (1 = Sí)",5. Bancario,Metas,10. Carácter
+Créditos vigentes (1 = Sí),5. Bancario,.,.
+Reportado en centrales (1 = Sí),5. Bancario,.,.

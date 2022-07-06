@@ -235,3 +235,5 @@ z1_ev_PAR15 %>% reshape2::melt(id.vars = c("Modelo","Umbral"),
   theme_minimal()+
   theme(text = element_text(family = "serif"),
         axis.text.x = element_text(hjust = 1, angle = 45))
+
+ggsave("2. Proyectos/05_tips_comercial_inicial/01_simulacion_PAR15.png")
