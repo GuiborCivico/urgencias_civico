@@ -108,133 +108,78 @@ a1_base <- merge(a0a_ts_raw, a0b_new_form, by = "customer_id", all.y = T) %>%
 
 
 a1_base <- a1_base %>% 
+  ### 2.2.1. Arreglo de variables ----
+mutate(
+  # Dueño de negocio
+  is_business_owner = ifelse(is_business_owner == "true",T,F), 
+  # Camara de comercio
+  is_registered_in_chamber_commerce = ifelse(is_registered_in_chamber_commerce=="true",T,F),
+  # Años de experiiencia
+  business_works_since_year = as.numeric(business_works_since_year)) %>% 
+  filter(between(business_works_since_year,1950,2022)) %>% 
+  mutate(business_works_since_year = 2022-business_works_since_year,
+         # Cambio de actividad último año
+         change_business_activity_last_year = ifelse(change_business_activity_last_year=="true",T,F),
+         # % de ventas Nequi
+         nequi_sales_percentage =
+           as.numeric(gsub("%","",nequi_sales_percentage)),
+         # Empleados y empleados de la familia
+         across(number_of_employees:number_of_family_employees,~as.numeric(.))) %>% 
+  filter(number_of_employees <= 50, number_of_family_employees<= 50) %>%
   mutate(
-    # Dueño de negocio
-    is_business_owner = ifelse(is_business_owner == "true",T,F), 
-    # Camara de comercio
-    is_registered_in_chamber_commerce = ifelse(is_registered_in_chamber_commerce=="true",T,F),
-    # Cambio de actividad último año
-    change_business_activity_last_year = ifelse(change_business_activity_last_year=="true",T,F),
-    # % de ventas Nequi
-    nequi_sales_percentage =
-           as.numeric(gsub("%","",nequi_sales_percentage)),
-    #
-    )
-
-class(a1_base$business_works_since_year)
-table(as.numeric(a1_base$business_works_since_year))
-
-  mutate(nequi_sales_percentage =
-           as.numeric(gsub("%","",nequi_sales_percentage)),
-         household_income = as.numeric(gsub("\\.||Más de ", "",household_income))/100000,
-         monthly_sales = as.numeric(gsub("\\.||Más de ", "",monthly_sales))/100000)  
+    # Ventas mensuales
+    monthly_sales = as.numeric(gsub("\\.||Más de ", "",monthly_sales))/10^6,
+    # Clientes conocidos por nombre
+    number_of_customers_known_by_nickname = as.numeric(number_of_customers_known_by_nickname),
+    # Colados en TM
+    fictitious_situation_02 = as.numeric(fictitious_situation_02),
+    
+    # Prioridades para crecer
+    growth_actions_priority = stringr::str_replace_all(
+      stringr::str_extract(growth_actions_priority,
+                           '"(.*?)"'), "[^[:alnum:]]", ""),
+    # Capacidad autopercibida para recuperase
+    difficulty_achieving_current_progress = as.numeric(difficulty_achieving_current_progress),
+    # AUtocalificaicón como comerciante
+    qualification_as_merchant = as.numeric(qualification_as_merchant),
+    # Pioriradad en metas
+    goals_priority = stringr::str_replace_all(
+      stringr::str_extract(goals_priority,
+                           '"(.*?)"'), "[^[:alnum:]]", ""),
+    # Ingresos del hogar
+    household_income = as.numeric(gsub("\\.||Más de ", "",household_income))/10^6,
+    # Personas en el hogar
+    across(number_of_household_members:number_of_household_contributors,
+           ~as.numeric(.)),
+    # Variables de Seguridad Social y Prestamos
+    across(is_health_taxpayer:had_other_loans, 
+           ~ifelse(.=="SI",T,F)),
+    # Creditos vigente y reporte en centrales (autoreportado)
+    across(has_current_loans:is_reported_in_credit_bureaus,
+           ~ifelse(.=="true",T,F)),
+    # Probabilidad de atrasao autoreportada
+    probability_of_late_payment = as.numeric(probability_of_late_payment)) %>% 
+  ### 2.2.2. Adición de nuevas variables ----
+  # Semana 
+  mutate(
+    semana = case_when(
+      as.numeric(substr(created_at,9,10)) <= 7~"Semana_1",
+      as.numeric(substr(created_at,9,10)) > 7 &
+        as.numeric(substr(created_at,9,10)) <= 14~"Semana_2",
+      as.numeric(substr(created_at,9,10)) > 14 &
+        as.numeric(substr(created_at,9,10)) <= 21~"Semana_3",
+      T~"Semana_4"),
+    # Dependencia económica
+    dependencia = number_of_household_contributors/number_of_household_members) %>% 
+  filter(!is.infinite(dependencia), !is.nan(dependencia)) %>% 
+  .[complete.cases(.),]
   
   
+rm(a0a_ts_raw,a0b_new_form)
 
 
-
-pr %>%  mutate(number_of_family_employees = 
-                 as.numeric(number_of_employees),
-               number_of_employees = ifelse(number_of_employees >10,10,
-                                            number_of_family_employees))
-
-
-
-
-
+ 
 #####
-mmtest <- function(base, model, umbral) {
-  base$riesgo <- predict(model, base, type = "response")
-  base <- base %>%
-  mutate(prediccion = ifelse(riesgo >= umbral,"P.1","P.0"))
-  base
-  
-}
 
-# 1. Modelación
-
-# 2. Revisión
-pr %>% 
-  stargazer(m1, type = "text")
-
-
-
-################
-# 1. Modelación
-m1 <- #pr %>% 
-  glm(PAR15~antiguedad+
-        edad+CU07_contact_gender+civil_status+nequi_sales_percentage+operation_type+
-        is_health_taxpayer+is_arl_taxpayer+is_health_taxpayer+is_pension_taxpayer+
-        is_reported_in_credit_bureaus+has_current_loans+household_income+monthly_sales+
-        preferred_investment,
-      pr, family = "binomial")
-
-pr %>% 
-  stargazer(m1, type = "text")
-
-# 3. Imputación y validación
-ppar_15(0.3)
-
-
-
-ppar_15 <- function(umbral_) {
-  pr <- mmtest(pr, m1, umbral_)
-  message(
-    "Aprobación esperada = ", 100-round(100*mean(pr$PAR15),2),"%\n",
-    "Aprobación final = ", round(100*mean(pr$riesgo < umbral_),2),"%\n",
-  paste0(
-    "Acuarcy = ",
-    round(
-      100*(table(pr$PAR15,pr$prediccion)[1]+
-             table(pr$PAR15,pr$prediccion)[4])/nrow(pr),2),"%  ||  ",
-    
-    "Sensitivity = ",
-    round(
-      100*(table(pr$PAR15,pr$prediccion)[4]/
-             (table(pr$PAR15,pr$prediccion)[4]+
-                table(pr$PAR15,pr$prediccion)[2])),2),"%  ||  ", 
-    
-    "Specificity = ",
-    round(
-      100*(table(pr$PAR15,pr$prediccion)[1]/
-             (table(pr$PAR15,pr$prediccion)[1]+
-                table(pr$PAR15,pr$prediccion)[3])),2),"%"))
-}
-
-
-round((table(pr$PAR15)/nrow(pr))*100,2)
-round((table(pr$PAR30)/nrow(pr))*100,2)
-round((table(pr$PAR60)/nrow(pr))*100,2)
-
-
-
-
-
-pr %>%  select(is_health_taxpayer, is_arl_taxpayer, is_health_taxpayer, 
-               is_pension_taxpayer,has_current_loans,is_reported_in_credit_bureaus,
-               ,civil_status, household_income, debtors_register, )
-
-
-table(pr$is_reported_in_credit_bureaus)
-
-
-
-
-
-
-
-
-
-
-
-rrport(a0_ts_raw, IM01_plazo)
-
-# Categóricas
-rrport(a0_ts_raw, CU05_categories) # 562 niveles
-
-rrport(a0_ts_raw, CU07_contact_gender) # 2 niveles
-
-rrport(a0_ts_raw, SL11_inventory_method)
-table(a0_ts_raw$SL11_inventory_method)
 
 
