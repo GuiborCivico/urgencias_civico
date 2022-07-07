@@ -21,14 +21,13 @@ source("prueba_source.R")
 
 # Introducción
 
-Este informe tiene dos objetivos putnuales:
+Este informe tiene dos objetivos puntuales:
 
--   Revisar cuál es el aporte de las diferentes conjuntos de variables al mejoramiento de la predicción del riesgo.
+-   Revisar cuál es el aporte de los diferentes conjuntos de variables al mejoramiento de la predicción del riesgo.
 
-```{=html}
 <!-- -->
-```
--   Revisar cuales son las vairables que pueden ser utilizadas como maradores directos de riesgo
+
+-   Revisar cuales son las variables que pueden ser utilizadas como **marcadores** directos de riesgo
 
 ### Muestra empleada
 
@@ -40,7 +39,7 @@ El análisis parte de los créditos que cumplan las siguientes condiciones:
 
 -   Que tengan todos los campos de información completa y con respuestas coherentes
 
-Con estas **condiciones muestrales**, la tamaño de la población evaluada fue de `r nrow(a1_base)` créditos.
+Con estas **condiciones muestrales**, el tamaño de la población evaluada fue de `r nrow(a1_base)` créditos.
 
 ```{r histograma_antiguedad, echo=FALSE, message=FALSE, warning=FALSE, results='asis', fig.align='center', fig.width=4, fig.height=3}
 
@@ -54,11 +53,11 @@ a1_base %>% ggplot(aes(antiguedad)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-Dado el tamaño de la muestra más su maduración (antigüedad de los créditos en la cartera), es posible que aquellos efectos pequeños (pero existentes) no sean detectados. La meta para la transición hacia la nueva solicitud como base de datos es de **1,001** observacioens validas.
+Dado el tamaño de la muestra más su maduración (antigüedad de los créditos en la cartera), es posible que aquellos efectos pequeños (pero existentes) no sean detectados. La meta para la transición hacia la nueva solicitud como base de datos es de 1,001 observaciones validas.
 
 # Metodología
 
-Se clasificaron los variables en 10 conjuntos como se ve e la siguiente tabla:
+Se clasificaron los variables en 10 conjuntos como se ve en la siguiente tabla:
 
 ```{r variables_grupos, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 
@@ -73,7 +72,7 @@ $$
 log\left( \frac{Pr|PAR_n}{1-Pr|PAR_n} \right) = \alpha + \beta (C_j)'_i+ \theta(C_{k:j-1})'_i + \epsilon_i
 $$
 
-De este manera, la probabilidad de entrar en un PAR cualuiqera (15, 30 o 60), esta determinada por el conjnto de variables a evaluar, mas los conjutnos de variables anteriores.
+De esta manera, la probabilidad de entrar en un PAR cualquiera (15, 30 o 60), está determinada por el conjunto de variables a evaluar, más los conjuntos de variables anteriores.
 
 | Modelo        | Variables explicataorias            |
 |---------------|-------------------------------------|
@@ -87,18 +86,30 @@ De este manera, la probabilidad de entrar en un PAR cualuiqera (15, 30 o 60), es
 
 Las limitaciones de este enfoque son:
 
--   El orden en el que se anxan variables **NO ES CONMUTATIVO**.
+-   El orden de los conjuntos de variables no es conmutativo respecto del desempeño de los modelos.
 
 -   Se asume un umbral constante para la evaluación de todo los PAR's
 
--   Se emplea un modelo logit con las variables nuevas, pero el que esta en uso es un RM con las variables viejas. Esto significa que los niveles de aprobación son ejemplificantes pero no los reales.
+-   Se emplea un modelo logit con las variables nuevas, pero el que está en uso es un RM con las variables viejas. Es un simulación no una evaluación.
 
 -   Por la maduración de la cartera, los resultados son más confiables para PAR's juveniles que para PAR's más maduros.
 
 # Resultados I: Aporte estadístico
 
+Antes de analizar los resultados del aporte estadístico de las variables es necesario tener en cuenta unas definiciones estadísticas aplicadas a nuestro contexto.
+
+-   \textcolor{teal}{Sensibilidad (Sensitivity)}: es la proporción de mala pagas detectados (si es igual a 100% quiere decir que detecte al 100% de los mala pagas).
+
+-   \textcolor{violet}{Especificidad (Specificity)}: es la proporción de buena pagas detectados (si es igual a 100% quiere decir que detecte al 100% de los buena pagas).
+
+-   \textcolor{olive}{Exactitud (Acuarcy)}: es la proporción de gente que se clasifico como buena paga o mala paga de manera correcta.
+
+-   \textcolor{red}{Aprobación final}: Dado un umbral y un modelo, que porcentaje de aprobación puede esperar.
+
+-   **Aprobación real (línea punteada negra)** : Si mi modelo fuera perfecto (Exactitud = 100%), cuanto debería aprobar.
+
 ```{r super_umbral, echo=TRUE}
-SUPER_UMBRAL = 0.5 # Defina un umbral de riesgo para la evaluación
+SUPER_UMBRAL = 0.2 # Defina un umbral de riesgo para la evaluación
 ```
 
 ```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8,fig.height=4}
@@ -107,10 +118,6 @@ source("03_PAR30.R", encoding = "UTF-8")
 source("04_PAR60.R", encoding = "UTF-8")
 
 ggpubr::ggarrange(pt_PAR15 ,pt_PAR30, nrow = 1)
-```
-
-```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=4, fig.height=4}
-pt_PAR60
 ```
 
 ```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
@@ -160,13 +167,31 @@ z2_general %>% filter(parametro == "Aprobacion.final") %>%
 
 # Resultados II: Variables relevantes (Marcadores de Riesgo)
 
-### PAR 15
+Las tablas de los resultados estadísticos pueden consultarse en la sección de anexos.
 
--   La semana en la que se realiza la solicitud: Los créditos solicitados en la 1ra semana del mes tiene un probabilidad más alta de entrar en mora de 15 días que los solicitados en la 3ra y 4ta semana. Dicho de manera más específica, los créditos solicitados en de la 3ra semana son tiene 22% menos probabilidad de entrar en PAR15 que los solicitados la 1ra semana, y los de la 4ta semana 31% menos de probabilidad comparados iugalmente contra los de la 1ra. Este efecto es estadísticamente significativo y robusto.
+### PAR 15 (marcadores de mora de 15 días)
 
-    Ahora bien, la semana no tiene efecto
+A continuación, se detallan las conclusiones del análisis sobre la mora de 15 días:
 
--   das
+-   **Semana en la que se realiza la solicitud:** Los créditos solicitados en la 1ra semana del mes tiene una probabilidad más alta de entrar en mora de 15 días que los solicitados en la 3ra y 4ta semana. Dicho de manera más específica, los créditos solicitados en de la 3ra semana son tiene 31% menos probabilidad de entrar en PAR15 que los solicitados la 1ra semana, y los de la 4ta semana 38% menos de probabilidad comparados igualmente contra los de la 1ra. Este efecto es estadísticamente significativo y robusto.
+
+    Ahora bien, la semana de solicitud no es determinante en moras superiores a 15 días. Es decir, la semana no me permite diferenciar quien se va a ser un "super moroso", pero si me permite discriminar entre quienes tendrán problemas con el pago de la primera cuota y quienes no. quizá esto pueda indicar un grupo de clientes que necesitan mayor acompañamiento en métodos de pago y planeación financiera.
+
+-   **Género:** Aunque no es un resultado totalmente robusto (el género es estadísticamente relevante en 9 de 10 modelos), pareciera que las mujeres tienen entre 65% y 70% más de probabilidades de entrar en una mora de 15 días. Es importante tener en cuenta la comisión de variable como la pobreza y el estrato en el ejercicio, y también otros fenómenos sociales como las brechas salariales y laborales de género. Es decir, en general el en la literatura y en los datos económicos nacionales, la mujer tiene mayores retos económicos por el hecho de ser mujer. Hay que tener precaución ética en este punto. En la muestra 47% son mujeres y 53% hombres.
+
+-   **Tamaño del hogar:** El tamaño del hogar es una variable no robusta (estadísticamente relevante en 6 de los 10 modelos), por cada miembro que tiene el hogar la probabilidad de entrar en mora de 15 días aumenta entre 129% y 146%. El tamaño promedio del hogar en la muestra es de 3.02 personas.
+
+-   **Miembros del hogar que aportan económicamente y la dependencia:** Aunque no son resultados robustos, parece existir una relación (no muy fuerte) entre dependencia (% de miembros del hogar que aportan) y el riesgo de mora de 15 días en el sentido esperado: más miembros que aportan en el hogar, menor riesgo moratorio. En promedio en la muestra, los hogares están compuestos por un 50,6% de miembros aportantes: es decir, en promedio en los hogares asociados a la muestra hay 1 dependiente por cada aportante.
+
+-   **Créditos vigentes:** Una de las variables más relevantes (tanto por su robustez como por su significancia estadística) es sí la persona reporta tender créditos vigentes. Las personas que reportan tener créditos vigentes tienen una probabilidad entre 248% a 266% más alta de entrar en mora de 15 días. En la muestra el 27.4% tienen reportaron tender créditos vigentes, contra el 72% que reportaron no tener. Esta situación no discrimina con quien los tenga. Es decir, **NO es relevante si el crédito es con un banco, prestamista, amigo o familiar**, la existencia de obligaciones crediticias pendientes representa un factor de riesgo.
+
+-   **Si fía a sus vecinos:** Las personas que reportaron fiar a sus vecinos y llevar registro en un cuaderno tiene entre 34% a 43% menos probabilidad de entrar en mora de 15 días, con respecto a los que fían y reportan llevar cuentas en un "Excel". El 18% de las personas reportaron fiar y llevar registro en un cuaderno, frente al 7.6% que reportaron llevar registro en un Excel o programa. Esta diferencia es robusta (estadísticamente significativa en los 10 modelos).
+
+-   **Destino del crédito (publicidad):** Las personas que reportaron la intención de destinar el crédito a publicidad tienen 231% más probabilidades de entrar en mora de 15 días respecto a las personas que reportaron tener interés de destinar el crédito a inventario. En la muestra 7.2% destinarían los fondos a publicidad, 64.3% a inventario, 17,8% a maquinaria, 8.5% a remodelaciones y el restante 2.1% a personal.
+
+### PAR 30 (marcadores de mora de 30 días)
+
+# Anexos
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 stargazer(models_PAR15, title = "Variables relevantes en PAR15 - Primera cuota",

@@ -260,7 +260,7 @@ pt_PAR30 <- z1_ev_PAR30 %>%
                  variable.name ="parametro",
                  value.name = "valor") %>% 
   ggplot(aes(as.factor(Modelo), valor, group = parametro, color = parametro))+
-  geom_hline(yintercept = 1-mean(a1_base$PAR30), color = "red", lty = 4)+
+  geom_hline(yintercept = 1-mean(a1_base$PAR30),  lwd =0.5, lty = 2)+
   geom_line()+
   geom_point()+
   scale_y_continuous(labels = scales::percent_format())+
