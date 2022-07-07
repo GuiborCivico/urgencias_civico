@@ -23,9 +23,12 @@ source("prueba_source.R")
 
 Este informe tiene dos objetivos putnuales:
 
--   Revisar cuales son las vairables que pueden ser utilizadas como maradores directos de riesgo
-
 -   Revisar cuál es el aporte de las diferentes conjuntos de variables al mejoramiento de la predicción del riesgo.
+
+```{=html}
+<!-- -->
+```
+-   Revisar cuales son las vairables que pueden ser utilizadas como maradores directos de riesgo
 
 ### Muestra empleada
 
@@ -33,7 +36,7 @@ El análisis parte de los créditos que cumplan las siguientes condiciones:
 
 -   Más de 60 días en la cartera
 
--   Que hallan llenado el formulario nuevo de solicitud del crédito
+-   Que hallan llenado el formulario nuevo de solicitud del crédito (45 preguntas)
 
 -   Que tengan todos los campos de información completa y con respuestas coherentes
 
@@ -51,11 +54,11 @@ a1_base %>% ggplot(aes(antiguedad)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-Dado el tamaño de la muestra más su maduración (antigüedad de los créditos en la cartera), es posible que aquellos efectos pequeños (pero existentes) no sean detectados por el análisis.
+Dado el tamaño de la muestra más su maduración (antigüedad de los créditos en la cartera), es posible que aquellos efectos pequeños (pero existentes) no sean detectados. La meta para la transición hacia la nueva solicitud como base de datos es de **1,001** observacioens validas.
 
 # Metodología
 
-Se clasificaron los variables en 9 conjuntos como se ve e la siguiente tabla:
+Se clasificaron los variables en 10 conjuntos como se ve e la siguiente tabla:
 
 ```{r variables_grupos, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 
@@ -84,10 +87,152 @@ De este manera, la probabilidad de entrar en un PAR cualuiqera (15, 30 o 60), es
 
 Las limitaciones de este enfoque son:
 
--   El orden en el que se anxan variables **NO ES CONMUTATIVO**, respecto al reporte estadístico global de cada conjutno de variables.
+-   El orden en el que se anxan variables **NO ES CONMUTATIVO**.
 
 -   Se asume un umbral constante para la evaluación de todo los PAR's
 
 -   Se emplea un modelo logit con las variables nuevas, pero el que esta en uso es un RM con las variables viejas. Esto significa que los niveles de aprobación son ejemplificantes pero no los reales.
 
 -   Por la maduración de la cartera, los resultados son más confiables para PAR's juveniles que para PAR's más maduros.
+
+# Resultados I: Aporte estadístico
+
+```{r super_umbral, echo=TRUE}
+SUPER_UMBRAL = 0.5 # Defina un umbral de riesgo para la evaluación
+```
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8,fig.height=4}
+source("02_PAR15.R", encoding = "UTF-8")
+source("03_PAR30.R", encoding = "UTF-8")
+source("04_PAR60.R", encoding = "UTF-8")
+
+ggpubr::ggarrange(pt_PAR15 ,pt_PAR30, nrow = 1)
+```
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=4, fig.height=4}
+pt_PAR60
+```
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+
+
+
+z2_general <- rbind(
+  (z1_ev_PAR15 %>%mutate(riesgo = "PAR15")),
+  (z1_ev_PAR30 %>%mutate(riesgo = "PAR30")),
+  (z1_ev_PAR60 %>%mutate(riesgo = "PAR60"))) %>% 
+  reshape2::melt(id.vars = c("Modelo","Umbral","riesgo"), 
+                               variable.name ="parametro",
+                               value.name = "valor")
+ggpubr::ggarrange(
+z2_general %>% filter(parametro == "Sensitivity") %>% 
+  ggplot(aes(Modelo, valor,group = riesgo, color = riesgo)) + 
+  geom_point()+
+  geom_path()+
+  scale_y_continuous(labels = scales::percent_format())+
+  scale_color_manual(values = c("cyan2","cyan3","cyan4"))+
+  labs(title = paste0("Sensitivity/Sensitividad (umbral ",SUPER_UMBRAL,")"),
+       subtitle = "% de mala pagas detectados", color = "", y = "", 
+       x = "Conjuntos de variables")+
+  theme_minimal()+
+  theme(text = element_text(family = "serif", size = 7),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x = element_text(hjust = 1, angle = 60),
+        legend.position = "bottom"),
+
+z2_general %>% filter(parametro == "Aprobacion.final") %>% 
+  ggplot(aes(Modelo, valor,group = riesgo, color = riesgo)) + 
+  geom_point()+
+  geom_path()+
+  scale_y_continuous(labels = scales::percent_format())+
+  scale_color_manual(values = c("salmon","brown","brown3"))+
+  labs(title = paste0("Aprobación Final (umbral ",SUPER_UMBRAL,")"),
+       subtitle = "% de creditos aprobados", color = "", y = "", 
+       x = "Conjuntos de variables")+
+  theme_minimal()+
+  theme(text = element_text(family = "serif", size = 7),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x = element_text(hjust = 1, angle = 60),
+        legend.position = "bottom"), nrow = 1)
+```
+
+# Resultados II: Variables relevantes (Marcadores de Riesgo)
+
+### PAR 15
+
+-   La semana en la que se realiza la solicitud: Los créditos solicitados en la 1ra semana del mes tiene un probabilidad más alta de entrar en mora de 15 días que los solicitados en la 3ra y 4ta semana. Dicho de manera más específica, los créditos solicitados en de la 3ra semana son tiene 22% menos probabilidad de entrar en PAR15 que los solicitados la 1ra semana, y los de la 4ta semana 31% menos de probabilidad comparados iugalmente contra los de la 1ra. Este efecto es estadísticamente significativo y robusto.
+
+    Ahora bien, la semana no tiene efecto
+
+-   das
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+stargazer(models_PAR15, title = "Variables relevantes en PAR15 - Primera cuota",
+          header = F, 
+          keep = 
+            c("semana","U07_contact_gendermale","number_of_household_members",
+              "number_of_household_contributors","dependencia","has_current_loans",
+              "debtors_register","difficulty_achieving_current_progress"
+              ,"preferred_investment"), digits = 2,font.size = "tiny",
+          covariate.labels = c(
+            "Semana 2","Semana 3", "Semana 4",
+            "Genero (Hombre)",
+            "Tamaño del hogar",
+            "Aportantes en el hogar",
+            "Dependencia",
+            "Créditos vigentes (Sí)",
+            "Fía. memoria", "Fía.cuaderno","Fía. (NO)",
+            "Dificicultad re-empezar",
+            "Destino: Maquinaria","Destino: Personal", "Destino: Publicidad", "Destino: Remodelaciones"
+          ))
+```
+
+### 
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+stargazer(models_PAR30, title = "Variables relevantes en PAR30 - Primera y segunda cuota",
+          header = F, 
+          keep = 
+            c("semana","U07_contact_gendermale","civil_status",
+              "number_of_household_members","has_current_loans",
+              "is_arl_taxpayer","preferred_investmen"),
+          digits = 2,font.size = "tiny",
+          covariate.labels = c(
+            "Semana 2","Semana 3", "Semana 4",
+            "Genero (Hombre)",
+            "EC: Soltero/a","EC: Unión libre","EC: Viudo/a",
+            "Tamaño del hogar",
+            "Créditos vigentes (Sí)",
+            "Cotiza SS.Riesgo (Sí)",
+            "Destino: Maquinaria","Destino: Personal", "Destino: Publicidad", "Destino: Remodelaciones"
+          ))
+```
+
+### 
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+stargazer(models_PAR60, title = "Variables relevantes en PAR60 - Segunda y tercera cuota*(!!)",
+          header = F, 
+          keep = 
+            c("CU07_contact_gendermale","operation_type",
+              "change_business_activity_last_year",
+              "has_current_loans","inventory_method",
+              "accounting_method","is_arl_taxpayer",
+              "preferred_investment"), digits = 2,font.size = "tiny",
+          covariate.labels = c(
+            "Genero (Hombre)",
+            "TL: Rentado","TL: Virtual/Digital","TP: Vivenda propia", 
+            "PT: Vivienda rentada",
+            "Cambio de actividad (Sí)",
+            "Créditos vigentes (Sí)",
+            "Iventario: Aplicación","Inventario: Cuaderno",
+            "Inventario: (No)", 
+            "Contabilidad: Aplicación","Contabilidad: Cuaderno",
+            "Contabilidad: (No)",
+            "Cotiza SS.Riesgo (Sí)",
+            "Destino: Maquinaria","Destino: Personal", "Destino: Publicidad", "Destino: Remodelaciones"
+          ))
+
+```

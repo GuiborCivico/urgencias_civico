@@ -1,7 +1,4 @@
 # Modealción par 30
-
-source("2. Proyectos/05_tips_comercial_inicial/01_analisis_inicial.R")
-
 # 1. Funciones de evaluación ----
 
 mmtest <- function(base, model, umbral) {
@@ -36,8 +33,8 @@ ppar_30 <- function(fuente,umbral_, model,model.name) {
 ## 2.1. Modelo básico ---- 
 m1 <- glm(PAR30~antiguedad+semana, 
           family = "binomial", a1_base)
-stargazer(m1, type = "text")
-z1_ev_PAR30 <- ppar_30(a1_base, 0.2, m1, "01_basico")
+
+z1_ev_PAR30 <- ppar_30(a1_base, SUPER_UMBRAL, m1, "01_basico")
 
 
 ## 2.2. Modelo persona ----
@@ -47,8 +44,8 @@ m2 <- glm(PAR30~antiguedad+semana+
             number_of_household_members+number_of_household_contributors+
             dependencia, 
           family = "binomial", a1_base)
-stargazer(m1,m2, type = "text")
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m2,"02_persona"))
+
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m2,"02_persona"))
 
 ## 2.3. Modelo ingresos ----
 m3 <- glm(PAR30~antiguedad+semana+
@@ -59,11 +56,11 @@ m3 <- glm(PAR30~antiguedad+semana+
             # Ingresos
             monthly_sales+nequi_sales_percentage+household_income, 
           family = "binomial", a1_base)
-stargazer(m1,m2,m3, type = "text")
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m3,"03_ingresos"))
+
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m3,"03_ingresos"))
 
 
-## 2.4. Modelo bancario ----
+## 2.4. Modelo negocio ----
 m4 <- glm(PAR30~antiguedad+semana+
             # Persona
             CU07_contact_gender+edad+civil_status+education_level+
@@ -71,15 +68,16 @@ m4 <- glm(PAR30~antiguedad+semana+
             dependencia+
             # Ingresos
             monthly_sales+nequi_sales_percentage+household_income+
-            # Bacario
-            had_loans_with_family_or_friends+had_loans_with_lenders+
-            had_loans_with_banks+had_other_loans+has_current_loans+
-            is_reported_in_credit_bureaus, 
+            #Negocio
+            business_type+business_works_since_year+operation_type+
+            change_business_activity_last_year+number_of_employees+
+            number_of_family_employees, 
           family = "binomial", a1_base)
-stargazer(m1,m2,m3,m4, type = "text")
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m4,"04_bancario"))
 
-## 2.5. Modelo gestión ----
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m4,"04_Negocio"))
+
+
+## 2.5. Modelo bancario ----
 m5 <- glm(PAR30~antiguedad+semana+
             # Persona
             CU07_contact_gender+edad+civil_status+education_level+
@@ -87,17 +85,19 @@ m5 <- glm(PAR30~antiguedad+semana+
             dependencia+
             # Ingresos
             monthly_sales+nequi_sales_percentage+household_income+
+            #Negocio
+            business_type+business_works_since_year+operation_type+
+            change_business_activity_last_year+number_of_employees+
+            number_of_family_employees+
             # Bacario
             had_loans_with_family_or_friends+had_loans_with_lenders+
             had_loans_with_banks+had_other_loans+has_current_loans+
-            is_reported_in_credit_bureaus+
-            # Gestión
-            inventory_method+accounting_method+debtors_register,
+            is_reported_in_credit_bureaus, 
           family = "binomial", a1_base)
-stargazer(m1,m2,m3,m4,m5, type = "text")
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m5,"05_gestion"))
 
-## 2.6. Modelo formalidad ----
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m5,"05_bancario"))
+
+## 2.5. Modelo gestión ----
 m6 <- glm(PAR30~antiguedad+semana+
             # Persona
             CU07_contact_gender+edad+civil_status+education_level+
@@ -105,6 +105,32 @@ m6 <- glm(PAR30~antiguedad+semana+
             dependencia+
             # Ingresos
             monthly_sales+nequi_sales_percentage+household_income+
+            #Negocio
+            business_type+business_works_since_year+operation_type+
+            change_business_activity_last_year+number_of_employees+
+            number_of_family_employees+
+            # Bacario
+            had_loans_with_family_or_friends+had_loans_with_lenders+
+            had_loans_with_banks+had_other_loans+has_current_loans+
+            is_reported_in_credit_bureaus+
+            # Gestión
+            inventory_method+accounting_method+debtors_register,
+          family = "binomial", a1_base)
+
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m6,"06_gestion"))
+
+## 2.7. Modelo formalidad ----
+m7 <- glm(PAR30~antiguedad+semana+
+            # Persona
+            CU07_contact_gender+edad+civil_status+education_level+
+            number_of_household_members+number_of_household_contributors+
+            dependencia+
+            # Ingresos
+            monthly_sales+nequi_sales_percentage+household_income+
+            #Negocio
+            business_type+business_works_since_year+operation_type+
+            change_business_activity_last_year+number_of_employees+
+            number_of_family_employees+
             # Bacario
             had_loans_with_family_or_friends+had_loans_with_lenders+
             had_loans_with_banks+had_other_loans+has_current_loans+
@@ -117,17 +143,21 @@ m6 <- glm(PAR30~antiguedad+semana+
             is_family_compensation_fund_taxpayer,
           
           family = "binomial", a1_base)
-stargazer(m1,m2,m3,m4,m5,m6, type = "text")
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m6,"06_formalidad"))
 
-## 2.7. Modelo comunidad ----
-m7 <- glm(PAR30~antiguedad+semana+
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m7,"07_formalidad"))
+
+## 2.8. Modelo comunidad ----
+m8 <- glm(PAR30~antiguedad+semana+
             # Persona
             CU07_contact_gender+edad+civil_status+education_level+
             number_of_household_members+number_of_household_contributors+
             dependencia+
             # Ingresos
             monthly_sales+nequi_sales_percentage+household_income+
+            #Negocio
+            business_type+business_works_since_year+operation_type+
+            change_business_activity_last_year+number_of_employees+
+            number_of_family_employees+
             # Bacario
             had_loans_with_family_or_friends+had_loans_with_lenders+
             had_loans_with_banks+had_other_loans+has_current_loans+
@@ -142,18 +172,22 @@ m7 <- glm(PAR30~antiguedad+semana+
             frequency_of_preferential_treatment_from_suppliers+
             number_of_customers_known_by_nickname,
           family = "binomial", a1_base)
-stargazer(m1,m2,m3,m4,m5,m6,m7, type = "text")
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m7,"07_comunidad"))
+
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m8,"08_comunidad"))
 
 
-## 2.8. Modelo autopercepción ----
-m8 <- glm(PAR30~antiguedad+semana+
+## 2.9. Modelo autopercepción ----
+m9 <- glm(PAR30~antiguedad+semana+
             # Persona
             CU07_contact_gender+edad+civil_status+education_level+
             number_of_household_members+number_of_household_contributors+
             dependencia+
             # Ingresos
             monthly_sales+nequi_sales_percentage+household_income+
+            #Negocio
+            business_type+business_works_since_year+operation_type+
+            change_business_activity_last_year+number_of_employees+
+            number_of_family_employees+
             # Bacario
             had_loans_with_family_or_friends+had_loans_with_lenders+
             had_loans_with_banks+had_other_loans+has_current_loans+
@@ -172,68 +206,76 @@ m8 <- glm(PAR30~antiguedad+semana+
             business_progress_compared_others+difficulty_achieving_current_progress+
             qualification_as_merchant+probability_of_late_payment,
           family = "binomial", a1_base)
-stargazer(m1,m2,m3,m4,m5,m6,m7,m8, type = "text")
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m8,"08_autopercepcion"))
+
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m9,"09_autopercepcion"))
 
 
-## 2.9. Modelo carácter ----
-m9 <- glm(PAR30~antiguedad+semana+
-            # Persona
-            CU07_contact_gender+edad+civil_status+education_level+
-            number_of_household_members+number_of_household_contributors+
-            dependencia+
-            # Ingresos
-            monthly_sales+nequi_sales_percentage+household_income+
-            # Bacario
-            had_loans_with_family_or_friends+had_loans_with_lenders+
-            had_loans_with_banks+had_other_loans+has_current_loans+
-            is_reported_in_credit_bureaus+
-            # Gestión
-            inventory_method+accounting_method+debtors_register+
-            # Fomalidad
-            business_legal_type+is_registered_in_chamber_commerce+
-            is_health_taxpayer+is_pension_taxpayer+is_arl_taxpayer+
-            is_family_compensation_fund_taxpayer+
-            # Comunidad
-            frequency_of_preferential_treatment_from_suppliers+
-            number_of_customers_known_by_nickname+
-            # Autopercepcion
-            business_progress_compared_last_year+business_progress_over_next_year+
-            business_progress_compared_others+difficulty_achieving_current_progress+
-            qualification_as_merchant+probability_of_late_payment+
-            # Caracter
-            preferred_investment+fictitious_situation_01+fictitious_situation_02+
-            growth_actions_priority+goals_priority,
-          family = "binomial", a1_base)
-stargazer(m1,m2,m3,m4,m5,m6,m7,m8,m9, type = "text",
-          keep = c("CU07","Semana","has_current_loans"),
-          digits = 2,
-          covariate.labels = 
-            c("Semana 2","Semana 3",
-              "Semana 4","Genero (Hombre)",
-              "Créditos vigentes-Sí"))
+## 2.10. Modelo carácter ----
+m10 <- glm(PAR30~antiguedad+semana+
+             # Persona
+             CU07_contact_gender+edad+civil_status+education_level+
+             number_of_household_members+number_of_household_contributors+
+             dependencia+
+             # Ingresos
+             monthly_sales+nequi_sales_percentage+household_income+
+             #Negocio
+             business_type+business_works_since_year+operation_type+
+             change_business_activity_last_year+number_of_employees+
+             number_of_family_employees+
+             # Bacario
+             had_loans_with_family_or_friends+had_loans_with_lenders+
+             had_loans_with_banks+had_other_loans+has_current_loans+
+             is_reported_in_credit_bureaus+
+             # Gestión
+             inventory_method+accounting_method+debtors_register+
+             # Fomalidad
+             business_legal_type+is_registered_in_chamber_commerce+
+             is_health_taxpayer+is_pension_taxpayer+is_arl_taxpayer+
+             is_family_compensation_fund_taxpayer+
+             # Comunidad
+             frequency_of_preferential_treatment_from_suppliers+
+             number_of_customers_known_by_nickname+
+             # Autopercepcion
+             business_progress_compared_last_year+business_progress_over_next_year+
+             business_progress_compared_others+difficulty_achieving_current_progress+
+             qualification_as_merchant+probability_of_late_payment+
+             # Caracter
+             preferred_investment+fictitious_situation_01+fictitious_situation_02+
+             growth_actions_priority+goals_priority,
+           family = "binomial", a1_base)
 
 
-z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,0.2,m9,"09_caracter"))
+
+
+z1_ev_PAR30 <- rbind(z1_ev_PAR30,ppar_30(a1_base,SUPER_UMBRAL,m10,"10_caracter"))
 
 
 
 # 3. Grafica evolutiva -----
 
 
-z1_ev_PAR30 %>% reshape2::melt(id.vars = c("Modelo","Umbral"), 
-                               variable.name ="parametro",
-                               value.name = "valor") %>% 
+pt_PAR30 <- z1_ev_PAR30 %>% 
+  select(-Aprobacion.real) %>% 
+  reshape2::melt(id.vars = c("Modelo","Umbral"), 
+                 variable.name ="parametro",
+                 value.name = "valor") %>% 
   ggplot(aes(as.factor(Modelo), valor, group = parametro, color = parametro))+
+  geom_hline(yintercept = 1-mean(a1_base$PAR30), color = "red", lty = 4)+
   geom_line()+
   geom_point()+
   scale_y_continuous(labels = scales::percent_format())+
-  labs(title = "Simulaciones simples PAR30",
-       subtitle = "Modelos aditivos",
-       x = "Adición de variables",
-       y = "%", color = "Parámetro")+
+  labs(title = "Resultados PAR30",
+       subtitle = paste0("Umbral empleado = ",SUPER_UMBRAL),
+       x = "Conjuntos de variables",
+       y = "", color = "")+
   theme_minimal()+
-  theme(text = element_text(family = "serif"),
-        axis.text.x = element_text(hjust = 1, angle = 45))
+  theme(text = element_text(family = "serif", size = 7),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x = element_text(hjust = 1, angle = 60),
+        legend.position = "none")+
+  guides(color = guide_legend(nrow = 2))
+pt_PAR30
 
-ggsave("2. Proyectos/05_tips_comercial_inicial/01_simulacion_PAR30.png")
+models_PAR30 <- list(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10)
+rm(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10)
