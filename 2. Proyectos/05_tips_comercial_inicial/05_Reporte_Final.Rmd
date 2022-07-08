@@ -1,7 +1,7 @@
 ---
-title: "Reporte de Riesgo"
+title: "Reporte de General de Riesgo"
 author: "Cívico - Equipo DATA"
-date: '2022-07-06'
+date: '2022-07-07'
 output:
   pdf_document: default
   html_document: default
@@ -24,9 +24,6 @@ source("prueba_source.R")
 Este informe tiene dos objetivos puntuales:
 
 -   Revisar cuál es el aporte de los diferentes conjuntos de variables al mejoramiento de la predicción del riesgo.
-
-<!-- -->
-
 -   Revisar cuales son las variables que pueden ser utilizadas como **marcadores** directos de riesgo
 
 ### Muestra empleada
@@ -108,37 +105,84 @@ Antes de analizar los resultados del aporte estadístico de las variables es nec
 
 -   **Aprobación real (línea punteada negra)** : Si mi modelo fuera perfecto (Exactitud = 100%), cuanto debería aprobar.
 
-```{r super_umbral, echo=TRUE}
-SUPER_UMBRAL = 0.2 # Defina un umbral de riesgo para la evaluación
-```
-
 ```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8,fig.height=4}
+SUPER_UMBRAL = 0.2
 source("02_PAR15.R", encoding = "UTF-8")
 source("03_PAR30.R", encoding = "UTF-8")
 source("04_PAR60.R", encoding = "UTF-8")
-
-ggpubr::ggarrange(pt_PAR15 ,pt_PAR30, nrow = 1)
-```
-
-```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
-
-
-
-z2_general <- rbind(
+pt_PAR15_20 <- pt_PAR15
+pt_PAR30_20 <- pt_PAR30
+pt_PAR60_20 <- pt_PAR60
+z2a_umbral_20 <- rbind(
   (z1_ev_PAR15 %>%mutate(riesgo = "PAR15")),
   (z1_ev_PAR30 %>%mutate(riesgo = "PAR30")),
   (z1_ev_PAR60 %>%mutate(riesgo = "PAR60"))) %>% 
   reshape2::melt(id.vars = c("Modelo","Umbral","riesgo"), 
                                variable.name ="parametro",
-                               value.name = "valor")
+                               value.name = "valor") 
+
+
+
+
+
+```
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+
+SUPER_UMBRAL = 0.5
+source("02_PAR15.R", encoding = "UTF-8")
+source("03_PAR30.R", encoding = "UTF-8")
+source("04_PAR60.R", encoding = "UTF-8")
+z2b_umbral_50 <- rbind(
+  (z1_ev_PAR15 %>%mutate(riesgo = "PAR15")),
+  (z1_ev_PAR30 %>%mutate(riesgo = "PAR30")),
+  (z1_ev_PAR60 %>%mutate(riesgo = "PAR60"))) %>% 
+  reshape2::melt(id.vars = c("Modelo","Umbral","riesgo"), 
+                               variable.name ="parametro",
+                               value.name = "valor") 
+
+z3_general <- rbind(z2a_umbral_20, z2b_umbral_50)
+
+
+
+```
+
+### Aportes estadísticos (generalidad)
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+
 ggpubr::ggarrange(
-z2_general %>% filter(parametro == "Sensitivity") %>% 
+  pt_PAR60+coord_cartesian(ylim = c(0,1)) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 10),
+                       labels = scales::percent_format()), 
+  pt_PAR60_20+coord_cartesian(ylim = c(0,1))+
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 10),
+                       labels = scales::percent_format()), nrow = 1)
+```
+
+En estás gráficas se compara cómo se comporta los mismos modelos (en este caso la predicción de que tan probable es que alguien entre en mora igual o mayor a 60 días) variando tan solo el umbral, y más allá de discutir el PAR60 como tal se puede extraer conclusiones valiosas:
+
+-   Lo primero y más relevante, es que cada conjunto de variables ayuda significativamente más a mejorar la calidad de los modelos. Esto es relevante, pues a pesar de que algunas variables puedan no ser estadísticamente significativas dentro de cada grupo de variables, en conjunto mejoran la predicción y la eficiencia del modelo.
+
+-   También se puede ver, que los umbrales juegan un papel muy relevante dentro de eficiencia de los modelos. En este caso, podemos ver que un umbral muy laxo (del 50%/0.5) si bien aumenta la aprobación y la lleva casi hasta el nivel esperado de aprobación, sacrifica con ello la capacidad de detectar a un alto porcentaje de los mala pagas (sacrifica la sensibilidad del modelo). En cambio, un modelo con un umbral más estricta puede no necesariamente reducir radicalmente la aprobación, pero si aumentar la seguridad en la cartera: pues aumenta sustancialmente la capacidad de detectar a los mala pagas.
+
+-   En conjunto entonces tenemos que, si poco a poco (a medida la base de la nueva solicitud madure) integramos los nuevos conjuntos de variables estipuladas en la solicitud a los modelos de riesgo, tendremos unos resultados mucho mejores con respecto a la salud de las carteras. Pero este efecto solo lograría multiplicarse, con políticas de umbrales mucho más estrictas.
+
+En los anéxos pueden encontrarse la comparacion de todos los parámetros de calidad de los modelos de predicción para PAR 15 y PAR 30.
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+
+
+ggpubr::ggarrange(
+z3_general %>% filter(parametro == "Sensitivity" & Umbral == 0.5) %>% 
   ggplot(aes(Modelo, valor,group = riesgo, color = riesgo)) + 
   geom_point()+
   geom_path()+
-  scale_y_continuous(labels = scales::percent_format())+
+  coord_cartesian(ylim = c(0,1))+
+  scale_y_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
   scale_color_manual(values = c("cyan2","cyan3","cyan4"))+
-  labs(title = paste0("Sensitivity/Sensitividad (umbral ",SUPER_UMBRAL,")"),
+  labs(title = paste0("Sensitivity/Sensitividad (umbral 0.5)"),
        subtitle = "% de mala pagas detectados", color = "", y = "", 
        x = "Conjuntos de variables")+
   theme_minimal()+
@@ -147,15 +191,16 @@ z2_general %>% filter(parametro == "Sensitivity") %>%
         plot.subtitle = element_text(hjust = 0.5),
         axis.text.x = element_text(hjust = 1, angle = 60),
         legend.position = "bottom"),
-
-z2_general %>% filter(parametro == "Aprobacion.final") %>% 
+z3_general %>% filter(parametro == "Sensitivity" & Umbral == 0.2) %>% 
   ggplot(aes(Modelo, valor,group = riesgo, color = riesgo)) + 
   geom_point()+
+  coord_cartesian(ylim = c(0,1))+
   geom_path()+
-  scale_y_continuous(labels = scales::percent_format())+
-  scale_color_manual(values = c("salmon","brown","brown3"))+
-  labs(title = paste0("Aprobación Final (umbral ",SUPER_UMBRAL,")"),
-       subtitle = "% de creditos aprobados", color = "", y = "", 
+  scale_y_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  scale_color_manual(values = c("cyan2","cyan3","cyan4"))+
+  labs(title = paste0("Sensitivity/Sensitividad (umbral 0.2)"),
+       subtitle = "% de mala pagas detectados", color = "", y = "", 
        x = "Conjuntos de variables")+
   theme_minimal()+
   theme(text = element_text(family = "serif", size = 7),
@@ -163,7 +208,12 @@ z2_general %>% filter(parametro == "Aprobacion.final") %>%
         plot.subtitle = element_text(hjust = 0.5),
         axis.text.x = element_text(hjust = 1, angle = 60),
         legend.position = "bottom"), nrow = 1)
+
 ```
+
+Este "**efecto multiplicador del umbral**" puede llegar a ser tan fuerte como 50 puntos porcentuales (más de 300%) en la capacidad por detectar a los mala pagas, como se observa en la gráfica anterior. Es decir, con una adición de nuevas variables, y un mejoramiento de los umbrales la morosidad de la cartera podría reducirse drásticamente, según reflejan los análisis realizados.
+
+Otro punto crucial que se observa en las gráficas anteriores (comparaciones de niveles de sensibilidad por umbral), es que si se relajan demasiado los umbrales, incluso el score de inteligencia artificial puede llegar a detectar al 0% de los deudores en los pares superiores (PAR 30 y PAR 60). Esto nos permite identificar con claridad, que, si la política de umbrales es laxa, el efecto estadístico sobre la morosidad **sería igual al no tener ningún score filtrando clientes**.
 
 # Resultados II: Variables relevantes (Marcadores de Riesgo)
 
@@ -171,7 +221,7 @@ Las tablas de los resultados estadísticos pueden consultarse en la sección de 
 
 ### PAR 15 (marcadores de mora de 15 días)
 
-A continuación, se detallan las conclusiones del análisis sobre la mora de 15 días:
+El riesgo de mora de 15 días, no esta integrado acutalmente al análisis de riesgo que se realiza para aprobar o desaprobar créditos (esta en proceso de integración). En la muestra 29.1% de las personas entraron alguna vez en este reisgo (es decir, el 29,1% de las personas alguna véz se demorarón 15 o más días en pagar una cuota). A continuación, se detallan las conclusiones del análisis sobre la mora de 15 días:
 
 -   **Semana en la que se realiza la solicitud:** Los créditos solicitados en la 1ra semana del mes tiene una probabilidad más alta de entrar en mora de 15 días que los solicitados en la 3ra y 4ta semana. Dicho de manera más específica, los créditos solicitados en de la 3ra semana son tiene 31% menos probabilidad de entrar en PAR15 que los solicitados la 1ra semana, y los de la 4ta semana 38% menos de probabilidad comparados igualmente contra los de la 1ra. Este efecto es estadísticamente significativo y robusto.
 
@@ -191,7 +241,67 @@ A continuación, se detallan las conclusiones del análisis sobre la mora de 15 
 
 ### PAR 30 (marcadores de mora de 30 días)
 
+En par 30 las variables de "semana" y genero pierden relevancia, algunas como si está en unión libre o el tamaño del hogar estan relacionadas con el riesgo de entrar en 30 días de mora, pero no de una manera contundente y/o robusta. En la muestra analizada el 20.7% de las personas en algun se tardaron 30 días o más en pagar una couta. Las variables que juegan un papel importante en el riesgo de entrar en 30 días de mora (PAR30) fueron:
+
+-   **Créditos vigentes:** Nuevamente el hecho de que la persona reporte tener créditos vigentes se vuelve un marcador de riesgo. Las personas que reportan tener créditos vigentes tienen una probabilidad entre 309% a 318% mayor de entrar en mora de 30 días, con respecto a las personas que no. Al igual que en el PAR 15, lo relevante es tener obligaciones vigentes y no con quien se las tiene.
+
+-   **Cotiza en seguridad social en riesgo (ARL):** Un marcador moderadamente robusto, es si la persona cotiza actualmente en ARL. Las personas que sí cotizan riesgo tienen una probabilidad 48.5% (aproximadamente) menor de entrar en mora de 30 días, con respecto a los que no cotizan.
+
+    Esto se puede explicar por la relación entre el pago de este tipo particular de seguridad social y el estatus laboral de las personas. Es decir, las personas que cotizaron alguna vez a pensión probablemente reporten que cotizan a pensión, aunque en el momento de la solicitud no lo estén haciendo ("¿alguna vez he cotizado pensión?"), mientras que el pago por riesgos laborales esta más asociado a lo que actualmente estoy haciendo. Otra teoría de por que esto es relevante es que hay un "grado de formalidad", en donde los que pagan, además de lo demás ARL estan más "formalizados" y luego tiene mayor estabilidad económica. Finamente esta la teoría no tan plausible como las anteriores, del "actor racional"; y es que las personas que pagan riesgo son más precavidas y tiene mejor planeación frente a los riesgos (asumiendo que lo pagan voluntariamente).
+
+-   **Destino del crédito (publicidad):** Nuevamente la personas que reportan intención de invertir los fondos del crédito solicitado en publicidad, tiene un 238% más de probabilidades de entrar en mora de 30 días que el resto.
+
+### PAR 60 (marcadores de mora de 60 días)
+
+En el PAR 60 (moras de más de 60 días) es importante tender en cuenta que la maduración promedio de la cartera es de 73 días, por lo que los resultados pueden fácilmente variar a medida la cartera siga madurando. En la muestra analizada el 12.6% de las personas llegaron a demorarse 60 días o más en el pago de una cuota. Ahora bien, las variables relevantes para la detección del PAR 60 fueron:
+
+-   **Genero:** Muéveme el género aparece como una variable robusta (estadísticamente significativa en cada uno de los 10 modelos), en donde las mujeres tienen entre 44% y 48% más de probabilidades de entrar en moras superiores a los 60 días. Es importante que se indague más sobre esta correlación entre el género y el riesgo, y revisar bien la distribución de solicitudes por género. Aunque ya fue mencionado con anterioridad, es importante tener una precaución ética respecto a este tema, pues la restricción del crédito se sumaria a la lista de barreras que las mujeres (en este caso emprendedoras y negociantes) tiene que enfrentar para salir adelante.
+
+-   **Tipo de local (tienda virtual/digital):** Las tiendas digitales, reportaron tener entre un 341% a un 431% más probabilidades de entrar en moras iguales o mayores a 60 días respecto al resto de negocios con atención física de la muestra (este resultado es robusto). Las tiendas virtuales/digitales representan el 7.5% de la muestra analizada.
+
+-   **Cambió de actividad en el último año:** Tal como se había establecido en el Score Tradicional, los comercios que han cambiado de actividad en el último año representan un mayor riesgo. Los comercios que reportan haber cambiado de actividad en el último año tiene una 309% más de probabilidades de entrar en moras iguales o mayores a 60 días. En la base analizada el 4.7% de los negocios reportaron haber cambiado de actividad el último año.
+
+-   **Créditos vigentes:** Los créditos vigentes juegan también un rol determinante en el PAR 60. Las personas que reportaron tener algún crédito vigente (sin importar su fuente) tienen de 280% a 288% mas probabilidades de entrar en moras iguales o superiores a 60 días.
+
+-   **Inventarios y contabilidad:** Estas dos variables hacen parte del componente de "gestión", es decir, de las variables enfocadas en determinar cómo la persona maneja su negocio. Acá es importante diferenciar entre cómo se manejan los inventarios del negocio y cómo se maneja la contabilidad del negocio. También es importante tender en cuenta las posibles respuestas en ambas preguntas: a) No lleva (contabilidad o inventario), b) la lleva con un cuaderno, c) la lleva con un Excel, o d) la lleva con una aplicación o programa espacializados.
+
+    A la hora de manejar inventarios, todas las personas (o todas las repuestas) son iguales exceptuando a las personas que reportan llevar a cabo el manejo de sus inventarios con aplicaciones especializadas. Este grupo de personas tiene 14.3% menos de probabilidades de entrar en una mora igual o superior a 6 días. En total el 9.4% de la muestra reporto usar un programa (o aplicación) especializado para el majeo de inventarios, el 24% utiliza Excel, el 61.7% un cuaderno y el restante 4% no lleva inventarios para su negocio.
+
+    En el caso del manejo de la contabilidad, son las personas que manejan su contabilidad en un cuaderno o en un Excel, las que tiene un mejor perfil respecto a las personas que, por ejemplo, reportan manejar su contabilidad en una aplicación, que tiene un riesgo 6.4 veces (642%) más probabilidades de entrar en PAR 60; o que reportan no manejar ninguna forma de contabilidad, que tienen 15.3 veces (1533%) más probabilidades de entrar en PAR60. De este modo, se puede apreciar que la gestión del negocio importa a la hora de analizar la morosidad más importante: la de largo plazo. En la muestra analizada el 3.2% reportó no manejar ninguna forma de contabilidad, el 11.4% usa una aplicación especializada para la contabilidad, el 25% Excel y el restante 60% llevan la contabilidad en un cuaderno.
+
+-   **Cotiza en seguridad social en riesgo (ARL):** Aunque la variable no es tan confiable ni robusta como en la predicción de la mora de 30 días o más, las personas que reportaron cotizar (o estar cotizando) a riesgos laborales tiene entre 44% a 48% menos probabilidades de entrar en moras iguales o superiores a 60 días.
+
+-   **Destino del crédito (publicidad):** Para el riesgo de entrar en mora mayor o igual a 60 días, nuevamente son las personas que reportan interés en invertir los fondos del crédito en publicad los que representa un riesgo 245% más alto que el resto de la población.
+
 # Anexos
+
+### Comparativo del desempeño de los modelos en PAR 15
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+
+ggpubr::ggarrange(
+  pt_PAR15+coord_cartesian(ylim = c(0,1)) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 10),
+                       labels = scales::percent_format()), 
+  pt_PAR15_20+coord_cartesian(ylim = c(0,1))+
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 10),
+                       labels = scales::percent_format()), nrow = 1)
+```
+
+### Comparativo del desempeño de los modelos en PAR 30
+
+```{r, echo=FALSE,fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+
+ggpubr::ggarrange(
+  pt_PAR30+coord_cartesian(ylim = c(0,1)) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 10),
+                       labels = scales::percent_format()), 
+  pt_PAR30_20+coord_cartesian(ylim = c(0,1))+
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 10),
+                       labels = scales::percent_format()), nrow = 1)
+```
+
+### Resultados de la modelación econométrica en cascada
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 stargazer(models_PAR15, title = "Variables relevantes en PAR15 - Primera cuota",

@@ -273,7 +273,7 @@ pt_PAR15 <- z1_ev_PAR15 %>%
         plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         axis.text.x = element_text(hjust = 1, angle = 60),
-        legend.position = "none")+
+        legend.position = "bottom")+
   guides(color = guide_legend(nrow = 2))
 pt_PAR15
 
