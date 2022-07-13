@@ -2,7 +2,6 @@ library(bigrquery)
 library(dplyr)
 library(ggplot2)
 
-
 # 1. Cargar información
 ## 1.1. Caragar base de imputaciones de rechazados
 a0_raw <- bq_table_download(bq_project_query(
@@ -96,7 +95,10 @@ a4_Final <- a3_Pre_final %>%
 table(a4_Final$Grupo)
 table(a4_Final$Grupo)/nrow(a4_Final)
 
-write.csv(a4_Final, "")
+write.csv(a4_Final %>% 
+        filter(Grupo %in% c("A1. Muy buenos","A2. Buenos")) %>% 
+          select(customer_id, Grupo, solicitudes, antiguedad, last.date),
+      "Barrido_Inicial_A1_A2.csv", row.names = F)
 
 
 
