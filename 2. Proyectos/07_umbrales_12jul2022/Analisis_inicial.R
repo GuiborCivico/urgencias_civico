@@ -8,6 +8,9 @@ library(tidyr)
 library(stringr)
 library(ggplot2)
 
+
+
+
 # 1. Descarga de datos  -----
 a0_raw <- bq_table_download(bq_project_query(
   ## A. Nombre del proyecto
@@ -18,19 +21,191 @@ a0_raw <- bq_table_download(bq_project_query(
 
 
 
+max_PAR30 = 10
+max_PAR60 = 5
+
 # 2. Filtro por hiperparámetros ----
 a1_prefiltros <-  a0_raw %>% 
-  filter(between(porcentaje_aprobacion,min_aporbacion,max_aprobacion)) %>% 
-  mutate(iteracion = row_number())
+  filter(precision_nopar30_g <= max_PAR30 &
+         precision_nopar60_g <= max_PAR60) %>% 
+  mutate(across(PAR10:acc_par90,~./100),
+         iteracion = row_number())
 
 
 
 # 3. Análisis general  ----
+# 3.1. Niveles de aprobación
+
+a1_prefiltros %>% ggplot(aes(porcentaje_aprobacion))+
+  geom_density(fill = "cyan4",color ="cyan4", alpha = 0.35)+
+  scale_x_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 5))+
+  geom_vline(xintercept = c(mean(a1_prefiltros$porcentaje_aprobacion),
+                            median(a1_prefiltros$porcentaje_aprobacion)),
+             lty = c(1,2), color = "brown3")+
+  labs(title = "Aprobación General Esperada",
+       subtitle = paste0(
+         "Con las restricciónes:\nCaretera en PAR 30 = ", max_PAR30,"% (max)\n",
+         "Catera en PAR 60 = ",max_PAR60,"% (max)"),
+       y ="",x  = "Nivel de aprobación", 
+       caption = paste0(
+         "Línea continua: Promedio (", 
+         round(mean(a1_prefiltros$porcentaje_aprobacion*100),2),
+         "%)  |  Línea discontinua: Mediana (",
+         round(median(a1_prefiltros$porcentaje_aprobacion*100),2),
+         "%)\n\nMáxima Aaprobación Estimada = ",
+         round(max(a1_prefiltros$porcentaje_aprobacion*100),2),"%"))+
+  theme_minimal()+
+  theme(text = element_text(family = "serif"),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
 
 
-## 3.1. Presisión ----
-### 3.1.1. Base ----
-a2_presision <- a1_prefiltros %>% 
+
+
+
+
+
+
+a0_raw %>% mutate(across(PAR10:acc_par90,~./100),
+                 iteracion = row_number()) %>% 
+  ggplot(aes(precision_nopar10_g, porcentaje_aprobacion, color = PAR10))+
+  geom_point() +
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1))+
+  scale_x_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  scale_y_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  geom_abline(intercept = 0, slope = 1, size = 0.5, lty = 2, color = "brown3") +
+  labs(title = "Cartera en PAR10", y = "Aprobación General",
+       x = 'Caretera en PAR 10\n"Con riesgo de moras iguales o mayores a 10 días"',
+       color ="Umbral en PAR10", caption = "[---] Línea de 45° grados (referncia)")+
+  theme_minimal()+ 
+  theme(text = element_text(family = "serif"),
+                         plot.title = element_text(hjust = 0.5),
+                         plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(color = "brown3"))
+
+
+
+a0_raw %>% mutate(across(PAR10:acc_par90,~./100),
+                  iteracion = row_number()) %>% 
+  ggplot(aes(precision_nopar30_g, porcentaje_aprobacion, color = PAR30))+
+  geom_point() +
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1))+
+  scale_x_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  scale_y_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  geom_abline(intercept = 0, slope = 1, size = 0.5, lty = 2, color = "brown3") +
+  labs(title = "Cartera en PAR30", y = "Aprobación General",
+       x = 'Caretera en PAR 30\n"Con riesgo de moras iguales o mayores a 30 días"',
+       color ="Umbral en PAR30", caption = "[---] Línea de 45° grados (referncia)")+
+  theme_minimal()+ 
+  theme(text = element_text(family = "serif"),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(color = "brown3"))
+
+
+
+a0_raw %>% mutate(across(PAR10:acc_par90,~./100),
+                  iteracion = row_number()) %>% 
+  ggplot(aes(precision_nopar60_g, porcentaje_aprobacion, color = PAR60))+
+  geom_point() +
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1))+
+  scale_x_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  scale_y_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  geom_abline(intercept = 0, slope = 1, size = 0.5, lty = 2, color = "brown3") +
+  labs(title = "Cartera en PAR60", y = "Aprobación General",
+       x = 'Caretera en PAR 60\n"Con riesgo de moras iguales o mayores a 60 días"',
+       color ="Umbral en PAR60", caption = "[---] Línea de 45° grados (referncia)")+
+  theme_minimal()+ 
+  theme(text = element_text(family = "serif"),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(color = "brown3"))
+
+
+
+a0_raw %>% mutate(across(PAR10:acc_par90,~./100),
+                  iteracion = row_number()) %>% 
+  ggplot(aes(precision_nopar90_g, porcentaje_aprobacion, color = PAR90))+
+  geom_point() +
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1))+
+  scale_x_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  scale_y_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 10))+
+  geom_abline(intercept = 0, slope = 1, size = 0.5, lty = 2, color = "brown3") +
+  labs(title = "Cartera en PAR90", y = "Aprobación General",
+       x = 'Caretera en PAR 90\n"Con riesgo de moras iguales o mayores a 90 días"',
+       color ="Umbral en PAR90", caption = "[---] Línea de 45° grados (referncia)")+
+  theme_minimal()+ 
+  theme(text = element_text(family = "serif"),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(color = "brown3"))
+
+
+stargazer::stargazer(
+lm(porcentaje_aprobacion~precision_nopar10_g+
+     precision_nopar30_g+precision_nopar60_g+precision_nopar90_g,
+   a0_raw), type = "text")
+
+
+
+
+
+## 3.1. Presision INVERSA
+### 3.2.1. Base ----
+a2_inv_presision <- a1_prefiltros %>% 
+  mutate(iteracion = row_number()) %>% 
+  pivot_longer(!iteracion, names_to = "parametros", values_to = "valor") %>% 
+  # Específico
+  filter(str_detect(parametros, "nopar")) %>% 
+  mutate(PAR = paste0("PAR ", str_extract(parametros,"[:digit:]+")),
+         tipo = ifelse(str_detect(parametros,"g$"),
+                       "II. Final","I. Inicial"),
+         valor = valor/100) 
+
+### 3.2.2. Plot ----
+
+pt1_presision <- a2_inv_presision %>% ggplot(aes(PAR,valor, color = tipo))+
+  geom_boxplot(outlier.shape = NA) +
+  scale_color_manual(values = c("brown3","cyan4"))+
+  
+  stat_summary(aes(PAR,valor, group = tipo), fun = mean, 
+               position = position_dodge(width = .75))+
+  
+  stat_summary(aes(PAR,valor, group = tipo), fun = mean,
+               geom = "line", lty = 2,
+               position = position_dodge(width = .75))+
+  coord_cartesian(ylim = c(0,1))+
+  scale_y_continuous(labels = scales::percent_format(),
+                     breaks = scales::pretty_breaks(n = 5))+
+  labs(title = "Porcentaje de deudores detectados (Sensitivity)",
+       subtitle = paste0("Aprobación entre el ",min_aporbacion,"% y ",
+                         max_aprobacion,"%"),
+       x = "",y = "", color = "Momento")+
+  theme_minimal()+
+  theme(text = element_text(family = "serif"),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+
+
+pt1_presision
+
+
+
+
+## 3.2. Presisión ----
+### 3.2.1. Base ----
+a3_seneitivity <- a1_prefiltros %>% 
   mutate(iteracion = row_number()) %>% 
   pivot_longer(!iteracion, names_to = "parametros", values_to = "valor") %>% 
   # Específico
@@ -40,9 +215,9 @@ a2_presision <- a1_prefiltros %>%
                        "II. Final","I. Inicial"),
          valor = valor/100) 
 
-### 3.1.2. Plot ----
+### 3.2.2. Plot ----
 
-pt1_presision <- a2_presision %>% ggplot(aes(PAR,valor, color = tipo))+
+pt1_presision <- a3_seneitivity %>% ggplot(aes(PAR,valor, color = tipo))+
   geom_boxplot(outlier.shape = NA) +
   scale_color_manual(values = c("brown3","cyan4"))+
   
@@ -65,9 +240,14 @@ pt1_presision <- a2_presision %>% ggplot(aes(PAR,valor, color = tipo))+
         plot.subtitle = element_text(hjust = 0.5))
 
 
-## 3.2. Umbrales ----
-### 3.2.1. Bases ----
-a3_umbrales <- a1_prefiltros %>% 
+
+
+
+
+
+## 3.3. Umbrales ----
+### 3.3.1. Bases ----
+a4_umbrales <- a1_prefiltros %>% 
   select(iteracion, starts_with("PAR")) %>% 
   pivot_longer(!iteracion, names_to = "PAR",values_to = "valor") %>% 
   mutate(valor = valor/100)
@@ -80,14 +260,14 @@ n_fun <- function(x){
 }
 
 
-pt2_umbrales<- a3_umbrales %>% ggplot(aes(valor, PAR))+
+pt2_umbrales<- a4_umbrales %>% ggplot(aes(valor, PAR))+
   geom_boxplot(color = "cyan4", alpha = 0.7, outlier.shape = NA, lwd = 0.3)+
   stat_summary(fun.y = mean, color ="firebrick", size = 0.1)+
   stat_summary(fun.data = n_fun, geom = "text",
                family = "serif", size =2, color = "firebrick", 
                position = position_nudge(y = -0.06,x = 0.04))+
   
-  geom_vline(xintercept = mean(a3_umbrales$valor, na.rm = T),
+  geom_vline(xintercept = mean(a4_umbrales$valor, na.rm = T),
              lty = 2, color = "grey45")+
   
   labs(title = paste0(
